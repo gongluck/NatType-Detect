@@ -1,6 +1,6 @@
 # NatType-Detect
 
-Simply check the NAT type
+Simply detect the NAT type and implement P2P connection
 
 ## Hardware dependent
 
@@ -12,6 +12,7 @@ Simply check the NAT type
 - start server A with ```server [server B's address]```
 - start server B with ```server [server A's address]```
 - detect client's NAT type with ```client [server A's address] [server B's address]```
+- detect another client's NAT type with ```client [server A's address] [server B's address]``` will start P2P connection
 - enjoy it
 
 ## Other tools

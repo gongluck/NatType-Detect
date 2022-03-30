@@ -75,8 +75,11 @@ int main(int argc, char *argv[])
       std::cout << "total time out" << std::endl;
       if (!stop) {
           std::cout << "type : Blocked" << std::endl;
-          exit(0);
-      } });
+          stop = true;
+      }
+      staticbuf[0] = P2P;
+      ret = sendto(fd1, staticbuf, 1, 0, (struct sockaddr*)&server1_addr, server1_addr_len);
+      });
   th.detach();
 
   do
@@ -88,7 +91,7 @@ int main(int argc, char *argv[])
     {
       std::cout << "<<< recv data from " << inet_ntoa(server_addr.sin_addr) << ":" << ntohs(server_addr.sin_port) << ", len: " << ret << std::endl;
       auto cmd = staticbuf[0];
-      std::cout << "type is " << (int)cmd << std::endl;
+      std::cout << "cmd type is " << (int)cmd << std::endl;
       switch (cmd)
       {
       case RESPONSE:
@@ -100,14 +103,14 @@ int main(int argc, char *argv[])
           std::cout << "public1 addr is " << publicip1 + ":" << publicport1 << std::endl;
           if (std::find(localips.begin(), localips.end(), publicip1) != localips.end())
           {
-            std::cout << "type : Opened" << std::endl;
-            exit(0);
+            std::cout << "nat type : Opened" << std::endl;
+            stop = true;
           }
           std::thread th([&]()
                          {
                       std::this_thread::sleep_for(std::chrono::seconds(5));
-                      std::cout << "wait REDIRECT time out" << std::endl;
                       if (!stop) {
+                          std::cout << "wait REDIRECT time out" << std::endl;
                           staticbuf[0] = REQUEST;
                           struct sockaddr_in peer_server_addr;
                           peer_server_addr.sin_addr.s_addr = inet_addr(server2.c_str());
@@ -117,10 +120,10 @@ int main(int argc, char *argv[])
                           std::cout << ">>> request to server2 " << server2 << std::endl;
                           std::thread th([&]() {
                               std::this_thread::sleep_for(std::chrono::seconds(5));
-                              std::cout << "wait server2 response time out" << std::endl;
                               if (!stop) {
-                                  std::cout << "type : Blocked" << std::endl;
-                                  exit(0);
+                                  std::cout << "wait server2 response time out" << std::endl;
+                                  std::cout << "nat type : Blocked" << std::endl;
+                                  stop = true;
                               }
                               });
                           th.detach();
@@ -137,7 +140,7 @@ int main(int argc, char *argv[])
             if (publicip1 != publicip2 || publicport1 != publicport2)
             {
               std::cout << "type : Symmetric" << std::endl;
-              exit(0);
+              stop = true;
             }
             else
             {
@@ -147,10 +150,10 @@ int main(int argc, char *argv[])
               std::thread th([&]()
                              {
                               std::this_thread::sleep_for(std::chrono::seconds(5));
-                              std::cout << "wait RESPONSEUNIPORT time out" << std::endl;
                               if (!stop) {
+                                  std::cout << "wait RESPONSEUNIPORT time out" << std::endl;
                                   std::cout << "type : Port Restricted Cone" << std::endl;
-                                  exit(0);
+                                  stop = true;
                               } });
               th.detach();
             }
@@ -158,7 +161,7 @@ int main(int argc, char *argv[])
           else
           {
             std::cout << "type : Restricted Cone" << std::endl;
-            exit(0);
+            stop = true;
           }
         }
       }
@@ -167,15 +170,37 @@ int main(int argc, char *argv[])
         if (!publicip1.empty())
         {
           std::cout << "type : Full Cone" << std::endl;
-          exit(0);
+          stop = true;
         }
         break;
       case RESPONSEUNIPORT:
       {
           std::cout << "type : Restricted Cone" << std::endl;
-          exit(0);
+          stop = true;
+      }
+      break;
+      case P2P:
+      {
+          struct sockaddr_in peer_addr = { 0 };
+          peer_addr.sin_addr = *(struct in_addr*)(staticbuf + 1);
+          peer_addr.sin_port = *(unsigned short*)(staticbuf + 5);
+          peer_addr.sin_family = AF_INET;
+          staticbuf[0] = PING;
+          ret = sendto(fd1, staticbuf, 1, 0, (struct sockaddr*)&peer_addr, sizeof(peer_addr));
       }
           break;
+      case PING:
+      {
+          staticbuf[0] = PONG;
+          ret = sendto(fd1, staticbuf, 1, 0, (struct sockaddr*)&server_addr, server_addr_len);
+      }
+      break;
+      case PONG:
+      {
+          staticbuf[0] = PING;
+          ret = sendto(fd1, staticbuf, 1, 0, (struct sockaddr*)&server_addr, server_addr_len);
+      }
+      break;
       default:
         break;
       }
@@ -183,7 +208,7 @@ int main(int argc, char *argv[])
     else
     {
       std::cout << "type : Blocked" << std::endl;
-      exit(0);
+      stop = true;
     }
   } while (true);
 

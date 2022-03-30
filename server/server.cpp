@@ -69,9 +69,7 @@ int main(int argc, char *argv[])
     {
       std::cout << "recv data from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << ", len: " << recvlen << std::endl;
       auto cmd = staticbuf[0];
-      std::cout << "type is " << (int)cmd << std::endl;
-      char ip[16] = {0};
-      unsigned int port = 0;
+      std::cout << "cmd type is " << (int)cmd << std::endl;
       switch (cmd)
       {
       case PING:
@@ -111,6 +109,34 @@ int main(int argc, char *argv[])
           std::cout << "other ip is " << inet_ntoa(other_addr.sin_addr) << std::endl;
           std::cout << "other port is " << ntohs(other_addr.sin_port) << std::endl;
       }
+      break;
+      case P2P:
+      {
+          static struct sockaddr_in p2p_addr = { 0 };
+          static socklen_t p2p_addr_len = 0;
+          if (p2p_addr_len == 0)
+          {
+              p2p_addr = client_addr;
+              p2p_addr_len = client_addr_len;
+              std::cout << "save peer for p2p" << std::endl;
+          }
+          else
+          {
+              staticbuf[0] = P2P;
+              memcpy(staticbuf + 1, &p2p_addr.sin_addr, 4);
+              memcpy(staticbuf + 5, &p2p_addr.sin_port, 2);
+              ret = sendto(fd, staticbuf, 7, 0, (sockaddr*)&client_addr, client_addr_len);
+              std::cout << "peer ip is " << inet_ntoa(p2p_addr.sin_addr) << std::endl;
+              std::cout << "peer port is " << ntohs(p2p_addr.sin_port) << std::endl;
+
+              memcpy(staticbuf + 1, &client_addr.sin_addr, 4);
+              memcpy(staticbuf + 5, &client_addr.sin_port, 2);
+              ret = sendto(fd, staticbuf, 7, 0, (sockaddr*)&p2p_addr, sizeof(p2p_addr));
+
+              p2p_addr_len = 0;
+          }
+      }
+      break;
       default:
         break;
       }
