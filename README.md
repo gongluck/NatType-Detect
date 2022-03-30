@@ -1,4 +1,4 @@
-# NetType-Detect
+# NatType-Detect
 
 Simply check the NAT type
 
