@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
   other_addr.sin_addr.s_addr = INADDR_ANY;
   other_addr.sin_port = htons(serverport + 1);
   other_addr.sin_family = AF_INET;
-  ret = bind(otherfd, (struct sockaddr*)&other_addr, other_addr_len);
+  ret = bind(otherfd, (struct sockaddr *)&other_addr, other_addr_len);
 
   ret = getsockname(fd, (struct sockaddr *)&myself_addr, &myself_addr_len);
   CHECKRETRETURN(ret, 0, -4);
@@ -101,40 +101,53 @@ int main(int argc, char *argv[])
       break;
       case REQUESTUNIPORT:
       {
-          staticbuf[0] = RESPONSEUNIPORT;
-          memcpy(staticbuf + 1, &client_addr.sin_addr, 4);
-          memcpy(staticbuf + 5, &client_addr.sin_port, 2);
-          ret = sendto(otherfd, staticbuf, 7, 0, (sockaddr*)&client_addr, client_addr_len);
-          ret = getsockname(otherfd, (struct sockaddr*)&other_addr, &other_addr_len);
-          std::cout << "other ip is " << inet_ntoa(other_addr.sin_addr) << std::endl;
-          std::cout << "other port is " << ntohs(other_addr.sin_port) << std::endl;
+        staticbuf[0] = RESPONSEUNIPORT;
+        memcpy(staticbuf + 1, &client_addr.sin_addr, 4);
+        memcpy(staticbuf + 5, &client_addr.sin_port, 2);
+        ret = sendto(otherfd, staticbuf, 7, 0, (sockaddr *)&client_addr, client_addr_len);
+        ret = getsockname(otherfd, (struct sockaddr *)&other_addr, &other_addr_len);
+        std::cout << "other ip is " << inet_ntoa(other_addr.sin_addr) << std::endl;
+        std::cout << "other port is " << ntohs(other_addr.sin_port) << std::endl;
       }
       break;
       case P2P:
       {
-          static struct sockaddr_in p2p_addr = { 0 };
-          static socklen_t p2p_addr_len = 0;
-          if (p2p_addr_len == 0)
+        static struct sockaddr_in p2p_addr = {0};
+        static socklen_t p2p_addr_len = 0;
+        if (p2p_addr_len == 0)
+        {
+          p2p_addr = client_addr;
+          p2p_addr_len = client_addr_len;
+          std::cout << "save peer for p2p" << std::endl;
+        }
+        else
+        {
+          staticbuf[0] = P2P;
+          memcpy(staticbuf + 1, &p2p_addr.sin_addr, 4);
+          unsigned short port = ntohs(p2p_addr.sin_port);
+          for (int i = 0; i < 300; ++i)
           {
-              p2p_addr = client_addr;
-              p2p_addr_len = client_addr_len;
-              std::cout << "save peer for p2p" << std::endl;
+            p2p_addr.sin_port = htons(port + i);
+            memcpy(staticbuf + 5, &p2p_addr.sin_port, 2);
+            ret = sendto(fd, staticbuf, 7, 0, (sockaddr *)&client_addr, client_addr_len);
+            std::cout << "peer 1 ip is " << inet_ntoa(p2p_addr.sin_addr) << std::endl;
+            std::cout << "peer 1 port is " << ntohs(p2p_addr.sin_port) << std::endl;
           }
-          else
+          p2p_addr.sin_port = htons(port);
+
+          memcpy(staticbuf + 1, &client_addr.sin_addr, 4);
+          port = ntohs(client_addr.sin_port);
+          for (int i = 0; i < 300; ++i)
           {
-              staticbuf[0] = P2P;
-              memcpy(staticbuf + 1, &p2p_addr.sin_addr, 4);
-              memcpy(staticbuf + 5, &p2p_addr.sin_port, 2);
-              ret = sendto(fd, staticbuf, 7, 0, (sockaddr*)&client_addr, client_addr_len);
-              std::cout << "peer ip is " << inet_ntoa(p2p_addr.sin_addr) << std::endl;
-              std::cout << "peer port is " << ntohs(p2p_addr.sin_port) << std::endl;
-
-              memcpy(staticbuf + 1, &client_addr.sin_addr, 4);
-              memcpy(staticbuf + 5, &client_addr.sin_port, 2);
-              ret = sendto(fd, staticbuf, 7, 0, (sockaddr*)&p2p_addr, sizeof(p2p_addr));
-
-              p2p_addr_len = 0;
+            client_addr.sin_port = htons(port + i);
+            memcpy(staticbuf + 5, &client_addr.sin_port, 2);
+            ret = sendto(fd, staticbuf, 7, 0, (sockaddr *)&p2p_addr, sizeof(p2p_addr));
+            std::cout << "peer 2 ip is " << inet_ntoa(client_addr.sin_addr) << std::endl;
+            std::cout << "peer 2 port is " << ntohs(client_addr.sin_port) << std::endl;
           }
+
+          p2p_addr_len = 0;
+        }
       }
       break;
       default:

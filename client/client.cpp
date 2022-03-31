@@ -78,8 +78,7 @@ int main(int argc, char *argv[])
           stop = true;
       }
       staticbuf[0] = P2P;
-      ret = sendto(fd1, staticbuf, 1, 0, (struct sockaddr*)&server1_addr, server1_addr_len);
-      });
+      ret = sendto(fd1, staticbuf, 1, 0, (struct sockaddr*)&server1_addr, server1_addr_len); });
   th.detach();
 
   do
@@ -175,30 +174,31 @@ int main(int argc, char *argv[])
         break;
       case RESPONSEUNIPORT:
       {
-          std::cout << "type : Restricted Cone" << std::endl;
-          stop = true;
+        std::cout << "type : Restricted Cone" << std::endl;
+        stop = true;
       }
       break;
       case P2P:
       {
-          struct sockaddr_in peer_addr = { 0 };
-          peer_addr.sin_addr = *(struct in_addr*)(staticbuf + 1);
-          peer_addr.sin_port = *(unsigned short*)(staticbuf + 5);
-          peer_addr.sin_family = AF_INET;
-          staticbuf[0] = PING;
-          ret = sendto(fd1, staticbuf, 1, 0, (struct sockaddr*)&peer_addr, sizeof(peer_addr));
+        struct sockaddr_in peer_addr = {0};
+        peer_addr.sin_addr = *(struct in_addr *)(staticbuf + 1);
+        peer_addr.sin_port = *(unsigned short *)(staticbuf + 5);
+        peer_addr.sin_family = AF_INET;
+        staticbuf[0] = PING;
+        ret = sendto(fd1, staticbuf, 1, 0, (struct sockaddr *)&peer_addr, sizeof(peer_addr));
+        std::cout << "try to create p2p to " << inet_ntoa(peer_addr.sin_addr) << ":" << ntohs(peer_addr.sin_port) << std::endl; 
       }
-          break;
+      break;
       case PING:
       {
-          staticbuf[0] = PONG;
-          ret = sendto(fd1, staticbuf, 1, 0, (struct sockaddr*)&server_addr, server_addr_len);
+        staticbuf[0] = PONG;
+        ret = sendto(fd1, staticbuf, 1, 0, (struct sockaddr *)&server_addr, server_addr_len);
       }
       break;
       case PONG:
       {
-          staticbuf[0] = PING;
-          ret = sendto(fd1, staticbuf, 1, 0, (struct sockaddr*)&server_addr, server_addr_len);
+        staticbuf[0] = PING;
+        ret = sendto(fd1, staticbuf, 1, 0, (struct sockaddr *)&server_addr, server_addr_len);
       }
       break;
       default:

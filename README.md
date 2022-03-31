@@ -18,3 +18,7 @@ Simply detect the NAT type and implement P2P connection
 ## Other tools
 
 - [NatTypeTester](https://github.com/gongluck/tools/blob/master/NatTypeTester3.2.exe)
+
+## To learn more
+
+[NAT基本原理及穿透详解(打洞)](https://juejin.cn/post/6844904098572009485)
