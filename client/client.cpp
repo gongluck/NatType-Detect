@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
           publicip1 = inet_ntoa(*(struct in_addr *)(staticbuf + 1));
           publicport1 = ntohs(*(unsigned short *)(staticbuf + 5));
           std::cout << "public1 addr is " << publicip1 + ":" << publicport1 << std::endl;
-          if (std::find(localips.begin(), localips.end(), publicip1) != localips.end())
+          if (std::find(localips.begin(), localips.end(), publicip1) != localips.end() && !stop)
           {
             std::cout << "nat type : Opened" << std::endl;
             stop = true;
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
             publicip2 = inet_ntoa(*(struct in_addr *)(staticbuf + 1));
             publicport2 = ntohs(*(unsigned short *)(staticbuf + 5));
             std::cout << "public2 addr is " << publicip2 + ":" << publicport2 << std::endl;
-            if (publicip1 != publicip2 || publicport1 != publicport2)
+            if (publicip1 != publicip2 || publicport1 != publicport2 && !stop)
             {
               std::cout << "type : Symmetric" << std::endl;
               stop = true;
@@ -166,18 +166,19 @@ int main(int argc, char *argv[])
       }
       break;
       case RESPONSERED:
-        if (!publicip1.empty())
+        if (!publicip1.empty() && !stop)
         {
           std::cout << "type : Full Cone" << std::endl;
           stop = true;
         }
         break;
       case RESPONSEUNIPORT:
-      {
-        std::cout << "type : Restricted Cone" << std::endl;
-        stop = true;
-      }
-      break;
+        if (!stop)
+        {
+          std::cout << "type : Restricted Cone" << std::endl;
+          stop = true;
+        }
+        break;
       case P2P:
       {
         struct sockaddr_in peer_addr = {0};
@@ -186,7 +187,7 @@ int main(int argc, char *argv[])
         peer_addr.sin_family = AF_INET;
         staticbuf[0] = PING;
         ret = sendto(fd1, staticbuf, 1, 0, (struct sockaddr *)&peer_addr, sizeof(peer_addr));
-        std::cout << "try to create p2p to " << inet_ntoa(peer_addr.sin_addr) << ":" << ntohs(peer_addr.sin_port) << std::endl; 
+        std::cout << "try to create p2p to " << inet_ntoa(peer_addr.sin_addr) << ":" << ntohs(peer_addr.sin_port) << std::endl;
       }
       break;
       case PING:
@@ -205,7 +206,7 @@ int main(int argc, char *argv[])
         break;
       }
     }
-    else
+    else if (!stop)
     {
       std::cout << "type : Blocked" << std::endl;
       stop = true;
