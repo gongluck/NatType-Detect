@@ -22,4 +22,7 @@ Simply detect the NAT type and implement P2P connection
 ## To learn more
 
 [NAT基本原理及穿透详解(打洞)](https://juejin.cn/post/6844904098572009485)
+
 [NAT详解：基本原理、穿越技术(P2P打洞)、端口老化等](http://www.52im.net/article-64-1.html)
+
+[STUN 原理理解](https://blog.csdn.net/wyl1987527/article/details/80188001)
